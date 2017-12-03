@@ -67,6 +67,13 @@ def parse_photo(issue):
     return None, None
 
 
+def get_description(message, issue, thread):
+    return "%s\r\n\r\nZasláno na základě podnětu %s" % (
+        message["body"],
+        issue["features"][0]["properties"]["cyclescape_url"],
+    )
+
+
 threads = get_threads()
 
 for thread in threads:
@@ -111,7 +118,7 @@ for thread in threads:
             "name": thread["title"],
             "email": "info@cyklistesobe.cz",
             "latlon": latlon,
-            "description": message["body"],
+            "description": get_description(message, issue, thread),
             "full_name": thread["created_by_name"],
             "date": thread["created_at"],
         },
