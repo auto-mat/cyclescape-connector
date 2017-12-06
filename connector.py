@@ -67,6 +67,10 @@ def parse_photo(issue):
     return None, None
 
 
+def get_email(token):
+    return "thread-%s@cyklistesobe.cz" % token
+
+
 def get_description(message, issue, thread):
     return "%s\r\n\r\nZasláno na základě podnětu %s" % (
         message["body"],
@@ -81,7 +85,7 @@ def get_zmenteto_issue_json(message, issue, thread, photo_count, files, latlon):
         "countPhotos": photo_count,
         "values": {
             "name": thread["title"],
-            "email": "info@cyklistesobe.cz",
+            "email": get_email(thread["public_token"]),
             "latlon": latlon,
             "description": get_description(message, issue, thread),
             "full_name": thread["created_by_name"],
