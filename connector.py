@@ -74,6 +74,34 @@ def get_description(message, issue, thread):
     )
 
 
+def get_zmenteto_issue_json(message, issue, thread, photo_count, files, latlon):
+    return {
+        "formId": 1,
+        "subcategoryId": 1,
+        "countPhotos": photo_count,
+        "values": {
+            "name": thread["title"],
+            "email": "info@cyklistesobe.cz",
+            "latlon": latlon,
+            "description": get_description(message, issue, thread),
+            "full_name": thread["created_by_name"],
+            "date": thread["created_at"],
+        },
+        "files": files,
+    }
+
+
+def get_photo_json(photo_string, photo_md5):
+    return {
+            "name": "Photo",
+            "data": photo_string.decode("UTF-8"),
+            "md5": photo_md5.hexdigest(),
+            "order": 1,
+            # "size": 6,
+            # "mimeType": "",
+    }
+
+
 threads = get_threads()
 
 for thread in threads:
@@ -98,32 +126,12 @@ for thread in threads:
     photo_count = 0
     files = []
     if photo_string:
-        photo_json = {
-                "name": "Photo",
-                "data": photo_string.decode("UTF-8"),
-                "md5": photo_md5.hexdigest(),
-                "order": 1,
-                # "size": 6,
-                # "mimeType": "",
-        }
+        photo_json = get_photo_json(photo_string, photo_md5)
         print(json.dumps(photo_json, indent=4))
         photo_count = 1
         files = [1]
 
-    zmenteto_issue_json = {
-        "formId": 1,
-        "subcategoryId": 1,
-        "countPhotos": photo_count,
-        "values": {
-            "name": thread["title"],
-            "email": "info@cyklistesobe.cz",
-            "latlon": latlon,
-            "description": get_description(message, issue, thread),
-            "full_name": thread["created_by_name"],
-            "date": thread["created_at"],
-        },
-        "files": files,
-    }
+    zmenteto_issue_json = get_zmenteto_issue_json(message, issue, thread, photo_count, files, latlon)
 
     print()
     print("---------------ZMĚŇTE.TO---------------")
