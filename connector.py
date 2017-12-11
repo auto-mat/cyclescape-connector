@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import json
+import sys
 from pprint import pprint
 
 import requests
@@ -11,13 +12,14 @@ api = slumber.API("http://www.cyklistesobe.cz:8000/api/")
 debug = False
 
 
-def get_threads():
+def get_threads(last_id=None):
     return api.threads.get(
         page=1,
         per_page=4,
         submit_external="zmenteto",
         order_by="created_at",
         order="desc",
+        after_id=last_id,
     )
 
 
@@ -107,6 +109,22 @@ def get_photo_json(photo_string, photo_md5):
 
 
 threads = get_threads()
+
+with open("last_id", 'r+') as f:
+    try:
+        last_id = f.read()
+    except Exception:
+        last_id = None
+
+threads = get_threads(last_id=last_id)
+
+if threads == []:
+    sys.exit()
+
+with open("last_id", 'w+') as f:
+    f.seek(0)
+    f.write(str(threads[0]["id"]))
+    f.truncate()
 
 for thread in threads:
     if debug:
