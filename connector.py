@@ -16,21 +16,20 @@ def get_threads(last_id=None):
     return api.threads.get(
         page=1,
         per_page=4,
-        submit_external="zmenteto",
-        order_by="created_at",
-        order="desc",
+        external_service="zmenteto",
+        order="created_at",
+        order_direction="desc",
         after_id=last_id,
     )
 
 
-def get_messages():
+def get_messages(thread):
     return api.messages.get(
         thread_id=thread["id"],
         page=1,
         per_page=1,
-        submit_external="zmenteto",
-        order_by="created_at",
-        order="desc",
+        order="created_at",
+        order_direction="asc",
     )
 
 
@@ -135,7 +134,7 @@ for thread in threads:
         print()
         print("----------------ISSUE-----------------")
         pprint(issue)
-    message = get_messages()[0]
+    message = get_messages(thread)[0]
 
     if debug:
         print()
