@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import json
+import os
 import sys
 from pprint import pprint
 
@@ -8,12 +9,14 @@ import requests
 
 import slumber
 
-api = slumber.API("http://www.cyklistesobe.cz:8000/api/")
+cyklistesobe_api = slumber.API("http://www.cyklistesobe.cz:8000/api/")
+headers = {"Authorization": "Bearer %s" % os.environ.get('AUTH_TOKEN')}
+zmenteto_api = slumber.API("https://zmente.to/api/v3")
 debug = False
 
 
 def get_threads(last_id=None):
-    return api.threads.get(
+    return cyklistesobe_api.threads.get(
         page=1,
         per_page=4,
         external_service="zmenteto",
@@ -24,7 +27,7 @@ def get_threads(last_id=None):
 
 
 def get_messages(thread):
-    return api.messages.get(
+    return cyklistesobe_api.messages.get(
         thread_id=thread["id"],
         page=1,
         per_page=1,
@@ -33,8 +36,8 @@ def get_messages(thread):
     )
 
 
-def get_issue():
-    return api.issues.get(
+def get_issue(thread):
+    return cyklistesobe_api.issues.get(
         id=thread["issue_id"],
     )
 
@@ -83,8 +86,8 @@ def get_zmenteto_issue_json(
         message, issue, thread, photo_count, files, latlon,
 ):
     return {
-        "formId": 1,
-        "subcategoryId": 1,
+        "formId": 6,
+        "subcategoryId": 18,
         "countPhotos": photo_count,
         "values": {
             "name": thread["title"],
@@ -109,29 +112,11 @@ def get_photo_json(photo_string, photo_md5):
     }
 
 
-threads = get_threads()
-
-with open("last_id", 'r+') as f:
-    try:
-        last_id = f.read()
-    except Exception:
-        last_id = None
-
-threads = get_threads(last_id=last_id)
-
-if threads == []:
-    sys.exit()
-
-with open("last_id", 'w+') as f:
-    f.seek(0)
-    f.write(str(threads[0]["id"]))
-    f.truncate()
-
-for thread in threads:
+def send_thread(thread):
     if debug:
         print("----------------THREAD-----------------")
         pprint(thread)
-    issue = get_issue()
+    issue = get_issue(thread)
     if debug:
         print()
         print("----------------ISSUE-----------------")
@@ -151,6 +136,10 @@ for thread in threads:
     if photo_string:
         photo_json = get_photo_json(photo_string, photo_md5)
         print(json.dumps(photo_json, indent=4))
+        response = zmenteto_api.forms.post_files.post(
+            photo_json, headers=headers,
+        )
+        print(response)
         photo_count = 1
         files = [1]
 
@@ -161,5 +150,31 @@ for thread in threads:
     print()
     print("---------------ZMĚŇTE.TO---------------")
     print(json.dumps(zmenteto_issue_json, indent=4))
+    response = zmenteto_api.forms.save.post(
+        zmenteto_issue_json, headers=headers,
+    )
+    print(response)
     print()
     print("============================================================")
+
+
+threads = get_threads()
+
+with open("last_id", 'r+') as f:
+    try:
+        last_id = f.read()
+    except Exception:
+        last_id = None
+
+threads = get_threads(last_id=last_id)
+
+if threads == []:
+    sys.exit()
+
+with open("last_id", 'w+') as f:
+    f.seek(0)
+    f.write(str(threads[0]["id"]))
+    f.truncate()
+
+for thread in threads:
+    send_thread(thread)
