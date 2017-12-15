@@ -10,8 +10,11 @@ import requests
 import slumber
 
 cyklistesobe_api = slumber.API("http://www.cyklistesobe.cz:8000/api/")
-headers = {"Authorization": "Bearer %s" % os.environ.get('AUTH_TOKEN')}
-zmenteto_api = slumber.API("https://zmente.to/api/v3")
+session = requests.session()
+session.headers.update(
+    {"Authorization": "Bearer %s" % os.environ.get('AUTH_TOKEN')},
+)
+zmenteto_api = slumber.API("https://zmente.to/api/v3", session=session)
 debug = False
 
 
@@ -94,7 +97,7 @@ def get_zmenteto_issue_json(
             "email": get_email(thread["public_token"]),
             "latlon": latlon,
             "description": get_description(message, issue, thread),
-            "full_name": thread["created_by_name"],
+            "full_name": thread["created_by_name"] or "Uživatel si nepřeje zveřejnit jméno",
             "date": thread["created_at"],
         },
         "files": files,
@@ -136,12 +139,15 @@ def send_thread(thread):
     if photo_string:
         photo_json = get_photo_json(photo_string, photo_md5)
         print(json.dumps(photo_json, indent=4))
-        response = zmenteto_api.forms.post_files.post(
-            photo_json, headers=headers,
-        )
-        print(response)
+        try:
+            response = getattr(zmenteto_api.forms, "post-files").post(photo_json)
+            print(response)
+        except (slumber.exceptions.HttpClientError, slumber.exceptions.HttpServerError) as e:
+            print(e.response.status_code)
+            print(e.content)
+            raise
         photo_count = 1
-        files = [1]
+        files = [response["fileId"]]
 
     zmenteto_issue_json = get_zmenteto_issue_json(
         message, issue, thread, photo_count, files, latlon,
@@ -150,10 +156,13 @@ def send_thread(thread):
     print()
     print("---------------ZMĚŇTE.TO---------------")
     print(json.dumps(zmenteto_issue_json, indent=4))
-    response = zmenteto_api.forms.save.post(
-        zmenteto_issue_json, headers=headers,
-    )
-    print(response)
+    try:
+        response = zmenteto_api.forms.save.post(zmenteto_issue_json)
+        print(response)
+    except (slumber.exceptions.HttpClientError, slumber.exceptions.HttpServerError) as e:
+        print(e.response.status_code)
+        print(e.content)
+        raise
     print()
     print("============================================================")
 
