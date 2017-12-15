@@ -79,7 +79,9 @@ def get_description(message, issue, thread):
     )
 
 
-def get_zmenteto_issue_json(message, issue, thread, photo_count, files, latlon):
+def get_zmenteto_issue_json(
+        message, issue, thread, photo_count, files, latlon,
+):
     return {
         "formId": 1,
         "subcategoryId": 1,
@@ -152,7 +154,9 @@ for thread in threads:
         photo_count = 1
         files = [1]
 
-    zmenteto_issue_json = get_zmenteto_issue_json(message, issue, thread, photo_count, files, latlon)
+    zmenteto_issue_json = get_zmenteto_issue_json(
+        message, issue, thread, photo_count, files, latlon,
+    )
 
     print()
     print("---------------ZMĚŇTE.TO---------------")
