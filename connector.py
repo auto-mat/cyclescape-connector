@@ -25,7 +25,7 @@ def get_threads(last_id=None):
         per_page=4,
         external_service="zmenteto",
         order="created_at",
-        order_direction="desc",
+        order_direction="asc",
         after_id=last_id,
     )
 
@@ -111,16 +111,16 @@ def get_zmenteto_issue_json(
 
 def get_photo_json(photo_string, photo_md5):
     return {
-            "name": "Photo",
+            "name": "TEST",
             "data": photo_string.decode("UTF-8"),
             "md5": photo_md5.hexdigest(),
-            "order": 1,
+            "order": 0,
             # "size": 6,
             # "mimeType": "",
     }
 
 
-def send_thread(thread):
+def send_thread(thread, id_file):
     if debug:
         print("----------------THREAD-----------------")
         pprint(thread)
@@ -147,12 +147,12 @@ def send_thread(thread):
         try:
             response = getattr(zmenteto_api.forms, "post-files").post(photo_json)
             print(response)
+            photo_count = 1
+            files = [response["fileId"]]
         except (slumber.exceptions.HttpClientError, slumber.exceptions.HttpServerError) as e:
             print(e.response.status_code)
             print(e.content)
             raise
-        photo_count = 1
-        files = [response["fileId"]]
 
     zmenteto_issue_json = get_zmenteto_issue_json(
         message, issue, thread, photo_count, files, latlon,
@@ -164,6 +164,7 @@ def send_thread(thread):
     try:
         response = zmenteto_api.forms.save.post(zmenteto_issue_json)
         print(response)
+        id_file.write(str(thread["id"]) + "\r\n")
     except (slumber.exceptions.HttpClientError, slumber.exceptions.HttpServerError) as e:
         print(e.response.status_code)
         print(e.content)
@@ -172,23 +173,16 @@ def send_thread(thread):
     print("============================================================")
 
 
-threads = get_threads()
-
+last_id = None
 with open("last_id", 'r+') as f:
-    try:
-        last_id = f.read()
-    except Exception:
-        last_id = None
+    for cur_id in f:
+        last_id = cur_id.strip()
 
 threads = get_threads(last_id=last_id)
 
 if threads == []:
     sys.exit()
 
-with open("last_id", 'w+') as f:
-    f.seek(0)
-    f.write(str(threads[0]["id"]))
-    f.truncate()
-
-for thread in threads:
-    send_thread(thread)
+with open("last_id", 'w+') as id_file:
+    for thread in threads:
+        send_thread(thread, id_file)
