@@ -2,6 +2,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import sys
 from pprint import pprint
 
@@ -37,6 +38,10 @@ def get_messages(thread):
         order="created_at",
         order_direction="asc",
     )
+
+
+def translate_date(date):
+    return re.sub(r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).(\d{6})Z$", r"\1-\2-\3 \4:\5:\6", date)
 
 
 def get_issue(thread):
@@ -98,7 +103,7 @@ def get_zmenteto_issue_json(
             "latlon": latlon,
             "description": get_description(message, issue, thread),
             "full_name": thread["created_by_name"] or "Uživatel si nepřeje zveřejnit jméno",
-            "date": thread["created_at"],
+            "date": translate_date(thread["created_at"]),
         },
         "files": files,
     }
