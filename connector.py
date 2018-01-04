@@ -10,7 +10,7 @@ import requests
 
 import slumber
 
-cyklistesobe_api = slumber.API("http://www.cyklistesobe.cz:8000/api/")
+cyklistesobe_api = slumber.API("http://www.cyklistesobe.cz/api/")
 session = requests.session()
 session.headers.update(
     {"Authorization": "Bearer %s" % os.environ.get('AUTH_TOKEN')},
@@ -70,7 +70,7 @@ def parse_photo(issue):
     photo_url = issue["features"][0]["properties"]["photo_thumb_url"]
     photo_string = None
     if photo_url:
-        photo_url = "http://www.cyklistesobe.cz:8000%s" % photo_url
+        photo_url = "http://www.cyklistesobe.cz%s" % photo_url
         response = requests.get(photo_url)
         if response.status_code == 200:
             photo_string = base64.b64encode(response.content)
