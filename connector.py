@@ -100,7 +100,7 @@ def get_zmenteto_issue_json(
         "values": {
             "name": thread["title"],
             "email": get_email(thread["public_token"]),
-            "latlon": latlon,
+            "gps": latlon,
             "description": get_description(message, issue, thread),
             "full_name": thread["created_by_name"] or "Uživatel si nepřeje zveřejnit jméno",
             "date": translate_date(thread["created_at"]),
